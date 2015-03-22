@@ -1,11 +1,46 @@
 /* global ol */
 
-
 var policeAPIURL = 'http://data.police.uk/api/crimes-street/all-crime?';
 var map;
 var mapView;
-var policeSource;
 var policeLayer;
+var policeSource = new ol.source.Vector({
+    projection: "EPSG:3857"
+});
+var policeCluster = new ol.source.Cluster({
+    distance: 20,
+    source: policeSource
+});
+var styleCache = {};
+var clusters = new ol.layer.Vector({
+    source: policeCluster,
+    style: function (feature) {
+        var size = feature.get('features').length;
+        var style = styleCache[size];
+        if (!style) {
+            style = [new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: calcClusterSize(size),
+                    stroke: new ol.style.Stroke({
+                        color: '#fff'
+                    }),
+                    fill: new ol.style.Fill({
+                        color: '#3399CC'
+                    })
+                }),
+                text: new ol.style.Text({
+                    text: size.toString(),
+                    fill: new ol.style.Fill({
+                        color: '#fff'
+                    })
+                })
+            })];
+            styleCache[size] = style;
+        }
+        return style;
+    }
+});
+
 
 function mapInit() {
     var attribution = new ol.control.Attribution({
@@ -15,7 +50,6 @@ function mapInit() {
         center: ol.proj.transform([-2.5,53.5], 'EPSG:4326', 'EPSG:3857'),
         zoom: 16
     });
-
     map = new ol.Map({
         target: 'map',
         projection: "EPSG:3857",
@@ -27,8 +61,14 @@ function mapInit() {
         view: mapView
     });
     map.addControl(attribution);
-    map.on('click', function(evt){
-        // Nothing Yet
+    map.on('moveend', function () {
+        if (mapView.getZoom() >= 15) {
+            $("#zoomMessageDiv").css("display", "none");
+            generatePoliceRequest();
+        } else {
+            $("#zoomMessageDiv").css("display", "inline");
+            policeSource.clear(true);
+        }
     });
 }
 
@@ -52,12 +92,8 @@ function generatePoliceRequest(){
 }
 
 function addFeaturesToMap(json){
-    //var mapFeatures = [];
     var JSObjects = json.map(JSON.stringify);
-    //console.log(JSObjects);
-    policeSource = new ol.source.Vector({
-        projection: "EPSG:3857"
-    });
+    policeSource.clear(true);
     $.each(JSObjects, function(key, value) {
         var feature = [];
         var jsObj = JSON.parse(value);
@@ -74,12 +110,13 @@ function addFeaturesToMap(json){
     policeLayer = new ol.layer.Vector({
         source: policeSource
     });
-    map.addLayer(policeLayer);
+    map.addLayer(clusters);
 }
 
-$(document).ready(function () {
-    $( "#getFeatures" ).click(function(){
-        generatePoliceRequest();
-    });
-
-});
+function calcClusterSize(count) {
+    if (count < 2) {
+        return 7;
+    } else {
+        return (5 * Math.log(2 + count));
+    }
+}
