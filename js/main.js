@@ -3,42 +3,15 @@
 var policeAPIURL = 'http://data.police.uk/api/crimes-street/all-crime?';
 var map;
 var mapView;
-var policeLayer;
 var policeSource = new ol.source.Vector({
     projection: "EPSG:3857"
 });
-var policeCluster = new ol.source.Cluster({
-    distance: 20,
-    source: policeSource
-});
-var styleCache = {};
-var clusters = new ol.layer.Vector({
-    source: policeCluster,
-    style: function (feature) {
-        var size = feature.get('features').length;
-        var style = styleCache[size];
-        if (!style) {
-            style = [new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: calcClusterSize(size),
-                    stroke: new ol.style.Stroke({
-                        color: '#fff'
-                    }),
-                    fill: new ol.style.Fill({
-                        color: '#3399CC'
-                    })
-                }),
-                text: new ol.style.Text({
-                    text: size.toString(),
-                    fill: new ol.style.Fill({
-                        color: '#fff'
-                    })
-                })
-            })];
-            styleCache[size] = style;
-        }
-        return style;
-    }
+var crimeHeatmap = new ol.layer.Heatmap({
+    source: policeSource,
+    blur: 50,
+    radius: 8,
+    opacity: 0.25,
+    gradient: ['#e3ff00', '#ffc100', '#f00']
 });
 
 function mapInit() {
@@ -61,12 +34,12 @@ function mapInit() {
     });
     map.addControl(attribution);
     map.on('moveend', function () {
-        if (mapView.getZoom() >= 15) {
+        if (mapView.getZoom() >= 13) {
             $("#zoomMessageDiv").css("display", "none");
             generatePoliceRequest();
         } else {
             $("#zoomMessageDiv").css("display", "inline");
-            policeSource.clear(true);
+            policeSource.clear();
         }
     });
 }
@@ -106,16 +79,19 @@ function addFeaturesToMap(json) {
         });
         policeSource.addFeature(policeFeature);
     });
-    policeLayer = new ol.layer.Vector({
-        source: policeSource
-    });
-    map.addLayer(clusters);
+    map.addLayer(crimeHeatmap);
 }
 
-function calcClusterSize(count) {
-    if (count < 2) {
-        return 7;
-    } else {
-        return (5 * Math.log(2 + count));
-    }
-}
+$(function () {
+    var blur = $('#blur');
+    var radius = $('#radius');
+    blur.on('input', function () {
+        console.log('blur');
+        crimeHeatmap.setBlur(parseInt(blur.val(), 10));
+    });
+
+    radius.on('input', function () {
+        console.log('radius');
+        crimeHeatmap.setRadius(parseInt(radius.val(), 10));
+    });
+});
