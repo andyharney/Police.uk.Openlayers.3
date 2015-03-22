@@ -1,10 +1,4 @@
 /* global ol */
-<<<<<<< HEAD
-=======
-/* global console */
-/* global $ */
-
->>>>>>> origin/master
 
 var policeAPIURL = 'http://data.police.uk/api/crimes-street/all-crime?';
 var map;
