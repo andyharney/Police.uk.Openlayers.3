@@ -41,13 +41,12 @@ var clusters = new ol.layer.Vector({
     }
 });
 
-
 function mapInit() {
     var attribution = new ol.control.Attribution({
-        collapsible:false
+        collapsible: false
     });
     mapView = new ol.View({
-        center: ol.proj.transform([-2.5,53.5], 'EPSG:4326', 'EPSG:3857'),
+        center: ol.proj.transform([-2.5, 53.5], 'EPSG:4326', 'EPSG:3857'),
         zoom: 16
     });
     map = new ol.Map({
@@ -72,29 +71,29 @@ function mapInit() {
     });
 }
 
-function constructPolicePoly(viewExtent){
+function constructPolicePoly(viewExtent) {
     var returnString;
     returnString = 'poly=' + viewExtent[1] + ',' + viewExtent[0] + ':' +
-        viewExtent[1] + ',' + viewExtent[2] + ':' +
-        viewExtent[3] + ',' + viewExtent[2] + ':' +
-        viewExtent[3] + ',' + viewExtent[0];
+    viewExtent[1] + ',' + viewExtent[2] + ':' +
+    viewExtent[3] + ',' + viewExtent[2] + ':' +
+    viewExtent[3] + ',' + viewExtent[0];
     return returnString;
 }
 
-function generatePoliceRequest(){
+function generatePoliceRequest() {
     var mapExtent = map.getView().calculateExtent(map.getSize());
     mapExtent = ol.proj.transformExtent(mapExtent, 'EPSG:3857', 'EPSG:4326');
     var request = policeAPIURL + constructPolicePoly(mapExtent);
     $.getJSON(request)
-        .done(function(json) {
+        .done(function (json) {
             addFeaturesToMap(json);
         });
 }
 
-function addFeaturesToMap(json){
+function addFeaturesToMap(json) {
     var JSObjects = json.map(JSON.stringify);
     policeSource.clear(true);
-    $.each(JSObjects, function(key, value) {
+    $.each(JSObjects, function (key, value) {
         var feature = [];
         var jsObj = JSON.parse(value);
         var y = jsObj.location.latitude;
