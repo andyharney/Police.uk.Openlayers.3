@@ -20,7 +20,7 @@ function mapInit() {
     });
     mapView = new ol.View({
         center: ol.proj.transform([-2.5, 53.5], 'EPSG:4326', 'EPSG:3857'),
-        zoom: 16
+        zoom: 6
     });
     map = new ol.Map({
         target: 'map',
@@ -36,9 +36,11 @@ function mapInit() {
     map.on('moveend', function () {
         if (mapView.getZoom() >= 13) {
             $("#zoomMessageDiv").css("display", "none");
+            $("#heatmapControls").css("display", "inline");
             generatePoliceRequest();
         } else {
             $("#zoomMessageDiv").css("display", "inline");
+            $("#heatmapControls").css("display", "none");
             policeSource.clear();
         }
     });
