@@ -32,7 +32,7 @@ function mapInit() {
         ],
         view: mapView
     });
-    map.addControl(attribution);
+    //map.addControl(attribution);
     map.on('moveend', function () {
         if (mapView.getZoom() >= 13) {
             $("#zoomMessageDiv").css("display", "none");
@@ -85,13 +85,10 @@ function addFeaturesToMap(json) {
 $(function () {
     var blur = $('#blur');
     var radius = $('#radius');
-    blur.on('input', function () {
-        console.log('blur');
+    $(document).on('click', '#blur', function () {
         crimeHeatmap.setBlur(parseInt(blur.val(), 10));
     });
-
-    radius.on('input', function () {
-        console.log('radius');
+    $(document).on('click', '#radius', function () {
         crimeHeatmap.setRadius(parseInt(radius.val(), 10));
     });
 });
