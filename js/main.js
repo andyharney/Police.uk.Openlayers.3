@@ -6,18 +6,17 @@ var mapView;
 var policeSource = new ol.source.Vector({
     projection: "EPSG:3857"
 });
+
 var crimeHeatmap = new ol.layer.Heatmap({
     source: policeSource,
-    blur: 50,
-    radius: 8,
-    opacity: 0.25,
+    blur: 40,
+    radius: 20,
+    opacity: 0.15,
     gradient: ['#e3ff00', '#ffc100', '#f00']
 });
 
 function mapInit() {
-    var attribution = new ol.control.Attribution({
-        collapsible: false
-    });
+
     mapView = new ol.View({
         center: ol.proj.transform([-2.5, 53.5], 'EPSG:4326', 'EPSG:3857'),
         zoom: 6
@@ -32,16 +31,18 @@ function mapInit() {
         ],
         view: mapView
     });
-    //map.addControl(attribution);
     map.on('moveend', function () {
         if (mapView.getZoom() >= 13) {
             $("#zoomMessageDiv").css("display", "none");
             $("#heatmapControls").css("display", "inline");
+            $("#crimeList").css("display", "inline");
             generatePoliceRequest();
         } else {
+            policeSource.clear();
             $("#zoomMessageDiv").css("display", "inline");
             $("#heatmapControls").css("display", "none");
-            policeSource.clear();
+            $("#crimeList").css("display", "none");
+            clearCrimeTable();
         }
     });
 }
@@ -68,11 +69,14 @@ function generatePoliceRequest() {
 function addFeaturesToMap(json) {
     var JSObjects = json.map(JSON.stringify);
     policeSource.clear(true);
+    var crimeList = [];
     $.each(JSObjects, function (key, value) {
         var feature = [];
         var jsObj = JSON.parse(value);
+        var crimeType = jsObj.category;
         var y = jsObj.location.latitude;
         var x = jsObj.location.longitude;
+        crimeList.push(crimeType.replace(/-/g, ' '));
         feature.push(parseFloat(x), parseFloat(y));
         feature = ol.proj.transform(feature, "EPSG:4326", "EPSG:3857");
         var policeFeature = new ol.Feature({
@@ -82,6 +86,27 @@ function addFeaturesToMap(json) {
         policeSource.addFeature(policeFeature);
     });
     map.addLayer(crimeHeatmap);
+    updateCrimeTable(crimeList);
+}
+
+function updateCrimeTable(crimeList) {
+    crimeList.sort();
+    var counts = {};
+    for (var i = 0; i < crimeList.length; i++) {
+        counts[crimeList[i]] = 1 + (counts[crimeList[i]] || 0);
+    }
+    var textArea = document.getElementById('crimeList');
+    textArea.innerHTML = '';
+    textArea.innerHTML = '<p>Crime In This Area<hr>';
+    $.each(counts, function (crime, number) {
+
+        textArea.innerHTML = textArea.innerHTML + crime + ' : <b>' + number + '</b><br>';
+    });
+}
+
+function clearCrimeTable() {
+    var textArea = document.getElementById('crimeList');
+    textArea.innerHTML = '<p>Crime In This Area<hr>';
 }
 
 $(function () {
